@@ -1,0 +1,226 @@
+/* Visualization page styles */
+.visualization-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.visualization-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.visualization-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+.visualization-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.visualization-button {
+    padding: 8px 16px;
+    background-color: #5C67F2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.visualization-button:hover {
+    background-color: #4a54f1;
+}
+
+.visualization-button.secondary {
+    background-color: #6c757d;
+}
+
+.visualization-button.secondary:hover {
+    background-color: #5a6268;
+}
+
+.visualization-button.export {
+    background-color: #28a745;
+}
+
+.visualization-button.back {
+    background-color: #007bff;
+}
+
+.visualization-button.back:hover {
+    background-color: #0069d9;
+}
+
+.visualization-button.export:hover {
+    background-color: #218838;
+}
+
+/* Diagram container */
+.diagram-container {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: white;
+    overflow: auto;
+    min-height: 500px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative; /* For positioning zoom controls */
+}
+
+/* Zoom controls */
+.zoom-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+}
+
+.zoom-controls button {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background-color: white;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.zoom-controls button:hover {
+    background-color: #f0f0f0;
+}
+
+/* SVG zoom transition */
+.mermaid svg {
+    transition: transform 0.1s ease-out;
+}
+
+.diagram-container.zoomable {
+    cursor: move;
+}
+
+/* Customization panel */
+.customization-panel {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.customization-panel h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #333;
+}
+
+.customization-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+}
+
+.form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.form-group select,
+.form-group input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Toggle switch for zoom */
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toggle-switch input[type="checkbox"] {
+    height: 0;
+    width: 0;
+    visibility: hidden;
+    position: absolute;
+}
+
+.toggle-switch label {
+    cursor: pointer;
+    text-indent: -9999px;
+    width: 50px;
+    height: 25px;
+    background: #ddd;
+    display: block;
+    border-radius: 25px;
+    position: relative;
+}
+
+.toggle-switch label:after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 19px;
+    height: 19px;
+    background: #fff;
+    border-radius: 19px;
+    transition: 0.3s;
+}
+
+.toggle-switch input:checked + label {
+    background: #5C67F2;
+}
+
+.toggle-switch input:checked + label:after {
+    left: calc(100% - 3px);
+    transform: translateX(-100%);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .visualization-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .visualization-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .form-group {
+        width: 100%;
+    }
+}

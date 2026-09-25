@@ -1,0 +1,45 @@
+README for BlueScrub (security scan pipeline)
+
+Overview
+
+"BlueScrub" was originally a standalone script, bluescrub.py, that ran a wide
+range of external linters and secret scanners against a repository and
+produced an HTML/Plotly report. That script was never wired into the Flask
+application (nothing imported it, and it maintained its own separate Flask
+app/database instead of reusing app.py's) and has been removed as dead code.
+
+The security scan that actually runs today lives in app.py, in the
+run_bluescrub(directory, repo_name) function, invoked via the /scan_code
+route (see handle_scan_code()). It is intentionally narrower than the old
+script's tool list:
+
+Tools actually run
+
+	•	Bandit: Python static security analysis (subprocess.run(['bandit', '-r', '.'])).
+	•	Pylint: Python code quality analysis (subprocess.run(['pylint', '--output-format=text', '.'])).
+	•	OSV-Scanner: dependency vulnerability scanning (utils, via run_osv_scan()).
+	•	Taint analysis: custom data-flow analysis tracking untrusted input
+	  through the code (utils/taint_analyzer.py, via run_taint_analysis()).
+	•	Security posture scoring: a composite score across vulnerability,
+	  code-quality, and testing signals (utils/security_posture.py, via
+	  calculate_security_posture()).
+
+Findings from Bandit and Pylint are triaged through TypeSafe (see
+utils/typesafe_triage.py) instead of the keyword/prefix heuristics an
+earlier version used, and results are persisted as ToolResult /
+MetricsHistory rows via the same SQLAlchemy models app.py defines, in the
+shared instance/bluescrub_database.db.
+
+If you need any of the tools the old bluescrub.py listed but that aren't in
+the list above (GitLeaks, TruffleHog, Safety, Semgrep, TFSec, Checkov,
+ESLint, Rubocop, SwiftLint, OCLint, GolangCI-Lint, GoSec, JSHint, Brakeman,
+Psalm, PHP_CodeSniffer), they are not currently invoked by any code path —
+adding one means wiring a new subprocess call into run_bluescrub(), the
+same way Bandit and Pylint are called there today.
+
+Output
+
+Results are shown at /security_issues/<repo_name> (severity-triaged
+findings), /dashboard and /dashboard/<repo_name> (metrics history), and
+/security_posture/<repo_name> (the composite score). A PDF/HTML report can
+be generated separately via /generate_pdf.

@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Taint Analysis - {{ repo_name }} - CodeBlue{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Taint Analysis Results</h2>
+    <p><strong>Repository:</strong> {{ repo_name }}</p>
+    
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('dashboard_repository', repo_name=repo_name) }}" class="btn btn-secondary">← Back to Dashboard</a>
+        <a href="{{ url_for('security_posture', repo_name=repo_name) }}" class="btn">Security Posture</a>
+        <a href="{{ url_for('code_risk_heatmap', repo_name=repo_name) }}" class="btn">Risk Heatmap</a>
+    </div>
+</div>
+
+{% if taint_results %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 1rem; text-align: center; border-left: 4px solid #dc3545;">
+            <div style="font-size: 2em; font-weight: bold; margin-bottom: 0.5rem;">{{ taint_results.total_sources }}</div>
+            <div style="color: #666; font-size: 0.9em;">Sources</div>
+        </div>
+        
+        <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 1rem; text-align: center; border-left: 4px solid #007bff;">
+            <div style="font-size: 2em; font-weight: bold; margin-bottom: 0.5rem;">{{ taint_results.total_sinks }}</div>
+            <div style="color: #666; font-size: 0.9em;">Sinks</div>
+        </div>
+        
+        <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 1rem; text-align: center; border-left: 4px solid #28a745;">
+            <div style="font-size: 2em; font-weight: bold; margin-bottom: 0.5rem;">{{ taint_results.total_sanitizers }}</div>
+            <div style="color: #666; font-size: 0.9em;">Sanitizers</div>
+        </div>
+        
+        <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 1rem; text-align: center; border-left: 4px solid #ffc107;">
+            <div style="font-size: 2em; font-weight: bold; margin-bottom: 0.5rem;">{{ taint_results.total_paths }}</div>
+            <div style="color: #666; font-size: 0.9em;">Total Paths</div>
+        </div>
+        
+        <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 1rem; text-align: center; border-left: 4px solid #dc3545;">
+            <div style="font-size: 2em; font-weight: bold; margin-bottom: 0.5rem;">{{ taint_results.high_risk_paths }}</div>
+            <div style="color: #666; font-size: 0.9em;">High Risk</div>
+        </div>
+        
+        <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 1rem; text-align: center; border-left: 4px solid #ffc107;">
+            <div style="font-size: 2em; font-weight: bold; margin-bottom: 0.5rem;">{{ taint_results.medium_risk_paths }}</div>
+            <div style="color: #666; font-size: 0.9em;">Medium Risk</div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>Analysis Summary</h3>
+        <p><strong>Scan Date:</strong> {{ taint_results.scan_date.strftime('%Y-%m-%d %H:%M') if taint_results.scan_date else 'Unknown' }}</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div>
+                <h4>Risk Distribution</h4>
+                <ul>
+                    <li>High Risk: {{ taint_results.high_risk_paths }} paths</li>
+                    <li>Medium Risk: {{ taint_results.medium_risk_paths }} paths</li>
+                    <li>Low Risk: {{ taint_results.low_risk_paths }} paths</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4>Coverage</h4>
+                <ul>
+                    <li>Sources Identified: {{ taint_results.total_sources }}</li>
+                    <li>Sinks Identified: {{ taint_results.total_sinks }}</li>
+                    <li>Sanitizers Found: {{ taint_results.total_sanitizers }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if taint_paths %}
+    <div class="card">
+        <h3>Detailed Taint Paths</h3>
+        
+        {% for path_type, paths in taint_paths.items() %}
+            {% if paths %}
+                <h4>{{ path_type.replace('_', ' ').title() }}</h4>
+                {% for path in paths %}
+                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid {% if path.get('risk_level', 'medium').lower() == 'high' %}#dc3545{% elif path.get('risk_level', 'medium').lower() == 'medium' %}#ffc107{% else %}#28a745{% endif %};">
+                        
+                        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1rem;">
+                            <h5 style="margin: 0;">Taint Path #{{ loop.index }}</h5>
+                            <span style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8em; font-weight: bold; background-color: {% if path.get('risk_level', 'medium').lower() == 'high' %}#f8d7da; color: #721c24{% elif path.get('risk_level', 'medium').lower() == 'medium' %}#fff3cd; color: #856404{% else %}#d4edda; color: #155724{% endif %};">
+                                {{ path.get('risk_level', 'Medium') }} Risk
+                            </span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; margin: 1rem 0; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; padding: 0.5rem 1rem; font-family: monospace; font-size: 0.9em;">
+                                <strong>Source:</strong> {{ path.get('source', 'Unknown') }}
+                            </div>
+                            
+                            <div style="font-size: 1.2em; color: #6c757d; margin: 0 0.5rem;">→</div>
+                            
+                            {% if path.get('sanitizers') %}
+                                {% for sanitizer in path.sanitizers %}
+                                    <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 0.5rem 1rem; font-family: monospace; font-size: 0.9em;">
+                                        <strong>Sanitizer:</strong> {{ sanitizer }}
+                                    </div>
+                                    <div style="font-size: 1.2em; color: #6c757d; margin: 0 0.5rem;">→</div>
+                                {% endfor %}
+                            {% endif %}
+                            
+                            <div style="background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px; padding: 0.5rem 1rem; font-family: monospace; font-size: 0.9em;">
+                                <strong>Sink:</strong> {{ path.get('sink', 'Unknown') }}
+                            </div>
+                        </div>
+                        
+                        {% if path.get('file') %}
+                            <p><strong>File:</strong> <code>{{ path.file }}</code></p>
+                        {% endif %}
+                        
+                        {% if path.get('line_number') %}
+                            <p><strong>Line:</strong> {{ path.line_number }}</p>
+                        {% endif %}
+                        
+                        {% if path.get('description') %}
+                            <p><strong>Description:</strong> {{ path.description }}</p>
+                        {% endif %}
+                        
+                        {% if path.get('recommendation') %}
+                            <div style="background: #f8f9fa; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
+                                <strong>Recommendation:</strong> {{ path.recommendation }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if not taint_results %}
+    <div class="card">
+        <div class="alert alert-warning">
+            <strong>No taint analysis results found.</strong> Run a security scan to generate taint analysis data.
+        </div>
+        
+        <div style="margin-top: 1rem;">
+            <form action="{{ url_for('handle_scan_code') }}" method="post" style="display: inline;">
+                <input type="hidden" name="repo_to_scan" value="{{ repo_name }}">
+                <button type="submit" class="btn">Run Security Scan</button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<div class="card">
+    <h3>Understanding Taint Analysis</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        <div>
+            <h4>Sources</h4>
+            <p>Entry points where untrusted data enters the application (user input, files, network data).</p>
+        </div>
+        
+        <div>
+            <h4>Sinks</h4>
+            <p>Sensitive operations that could be exploited if they receive untrusted data (SQL queries, file operations).</p>
+        </div>
+        
+        <div>
+            <h4>Sanitizers</h4>
+            <p>Functions that clean or validate data, breaking the taint flow and reducing risk.</p>
+        </div>
+        
+        <div>
+            <h4>Taint Paths</h4>
+            <p>Data flow paths from sources to sinks, representing potential security vulnerabilities.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

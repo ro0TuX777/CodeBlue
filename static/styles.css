@@ -1,0 +1,81 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    color: #333;
+}
+
+form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+input[type="text"], input[type="submit"] {
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: block;
+    width: 95%;
+}
+
+input[type="submit"] {
+    background-color: #5C67F2;
+    color: white;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover {
+    background-color: #4a54f1;
+}
+
+label {
+    font-weight: bold;
+}
+
+/* Custom styles for tabs */
+.nav-tabs .nav-link {
+    color: #212529 !important; /* Dark text color */
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: #007bff !important; /* Primary color for active tab */
+    font-weight: 600;
+}
+
+/* File browser styles */
+#file-browser-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#file-browser-list a {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+}
+
+#file-browser-list a:first-child {
+    border-top: none;
+}
+
+#file-browser-list a:hover {
+    background-color: #f8f9fa;
+}
+
+#file-browser-list a.binary-file {
+    color: #007bff;
+}
+
+#file-browser-breadcrumb {
+    background-color: #f8f9fa;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+}

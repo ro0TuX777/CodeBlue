@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Overview - CodeBlue{% endblock %}
+
+{% block head %}
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .metric-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: transform 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .metric-value {
+        font-size: 2.5em;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .metric-label {
+        color: #666;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .metric-card.high { border-left: 4px solid #dc3545; }
+    .metric-card.medium { border-left: 4px solid #ffc107; }
+    .metric-card.low { border-left: 4px solid #28a745; }
+    .metric-card.info { border-left: 4px solid #007bff; }
+    
+    .repo-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+    .repo-table th,
+    .repo-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .repo-table th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    .repo-table tr:hover {
+        background-color: #f8f9fa;
+    }
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+    .status-high { background-color: #f8d7da; color: #721c24; }
+    .status-medium { background-color: #fff3cd; color: #856404; }
+    .status-low { background-color: #d4edda; color: #155724; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Security Dashboard Overview</h2>
+    <p>Comprehensive view of security metrics across all analyzed repositories.</p>
+</div>
+
+{% if metrics %}
+    {% set total_repos = metrics|length %}
+    {% set total_high_issues = metrics.values()|sum(attribute='high_severity_issues') %}
+    {% set total_medium_issues = metrics.values()|sum(attribute='medium_severity_issues') %}
+    {% set total_low_issues = metrics.values()|sum(attribute='low_severity_issues') %}
+    {% set avg_complexity = (metrics.values()|sum(attribute='code_complexity') / total_repos)|round(2) if total_repos > 0 else 0 %}
+    
+    <div class="dashboard-grid">
+        <div class="metric-card info">
+            <div class="metric-value">{{ total_repos }}</div>
+            <div class="metric-label">Repositories</div>
+        </div>
+        
+        <div class="metric-card high">
+            <div class="metric-value">{{ total_high_issues }}</div>
+            <div class="metric-label">High Severity Issues</div>
+        </div>
+        
+        <div class="metric-card medium">
+            <div class="metric-value">{{ total_medium_issues }}</div>
+            <div class="metric-label">Medium Severity Issues</div>
+        </div>
+        
+        <div class="metric-card low">
+            <div class="metric-value">{{ total_low_issues }}</div>
+            <div class="metric-label">Low Severity Issues</div>
+        </div>
+        
+        <div class="metric-card info">
+            <div class="metric-value">{{ avg_complexity }}</div>
+            <div class="metric-label">Avg Complexity</div>
+        </div>
+        
+        <div class="metric-card info">
+            <div class="metric-value">{{ (metrics.values()|sum(attribute='lines_of_code') / 1000)|round(1) }}K</div>
+            <div class="metric-label">Total Lines of Code</div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>Repository Details</h3>
+        <div style="overflow-x: auto;">
+            <table class="repo-table">
+                <thead>
+                    <tr>
+                        <th>Repository</th>
+                        <th>Last Scan</th>
+                        <th>High Issues</th>
+                        <th>Medium Issues</th>
+                        <th>Low Issues</th>
+                        <th>Complexity</th>
+                        <th>Lines of Code</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for repo_name, metric in metrics.items() %}
+                        <tr>
+                            <td>
+                                <strong>{{ repo_name }}</strong>
+                            </td>
+                            <td>{{ metric.scan_date.strftime('%Y-%m-%d %H:%M') if metric.scan_date else 'N/A' }}</td>
+                            <td>
+                                {% if metric.high_severity_issues > 0 %}
+                                    <span class="status-badge status-high">{{ metric.high_severity_issues }}</span>
+                                {% else %}
+                                    <span class="status-badge status-low">0</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if metric.medium_severity_issues > 0 %}
+                                    <span class="status-badge status-medium">{{ metric.medium_severity_issues }}</span>
+                                {% else %}
+                                    <span class="status-badge status-low">0</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if metric.low_severity_issues > 0 %}
+                                    <span class="status-badge status-low">{{ metric.low_severity_issues }}</span>
+                                {% else %}
+                                    <span class="status-badge status-low">0</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ metric.code_complexity|round(2) }}</td>
+                            <td>{{ "{:,}".format(metric.lines_of_code) }}</td>
+                            <td>
+                                <a href="{{ url_for('dashboard_repository', repo_name=repo_name) }}" class="btn" style="font-size: 0.8em; padding: 0.25rem 0.5rem;">Details</a>
+                                <a href="{{ url_for('code_risk_heatmap', repo_name=repo_name) }}" class="btn btn-secondary" style="font-size: 0.8em; padding: 0.25rem 0.5rem; margin-left: 0.25rem;">Heatmap</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>Quick Actions</h3>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="{{ url_for('index') }}" class="btn">Scan New Repository</a>
+            <a href="{{ url_for('visualize') }}" class="btn btn-secondary">Visualize Code</a>
+            <button type="button" class="btn btn-secondary" onclick="refreshDashboard()">Refresh Data</button>
+            <button type="button" class="btn btn-secondary" onclick="exportData()">Export Report</button>
+        </div>
+    </div>
+    
+{% else %}
+    <div class="card">
+        <div class="alert alert-warning">
+            <strong>No scan results found.</strong> Start by scanning some repositories to see metrics here.
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <a href="{{ url_for('index') }}" class="btn">Scan Your First Repository</a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>Getting Started</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div>
+                <h4>1. Search Repositories</h4>
+                <p>Use the main page to search for repositories by tags, URLs, or local paths.</p>
+            </div>
+            
+            <div>
+                <h4>2. Run Security Scans</h4>
+                <p>Select repositories and run comprehensive security analysis scans.</p>
+            </div>
+            
+            <div>
+                <h4>3. Review Results</h4>
+                <p>Analyze the results in detailed dashboards and visualizations.</p>
+            </div>
+            
+            <div>
+                <h4>4. Track Progress</h4>
+                <p>Monitor security improvements over time with historical data.</p>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+function refreshDashboard() {
+    location.reload();
+}
+
+function exportData() {
+    // Simple CSV export of the table data
+    const table = document.querySelector('.repo-table');
+    if (!table) {
+        alert('No data to export');
+        return;
+    }
+    
+    let csv = '';
+    const rows = table.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        const cols = row.querySelectorAll('th, td');
+        const rowData = [];
+        cols.forEach((col, index) => {
+            if (index < cols.length - 1) { // Skip the Actions column
+                rowData.push('"' + col.textContent.trim().replace(/"/g, '""') + '"');
+            }
+        });
+        csv += rowData.join(',') + '\n';
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'codeblue-dashboard-' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Auto-refresh every 5 minutes
+setTimeout(function() {
+    location.reload();
+}, 300000);
+</script>
+{% endblock %}

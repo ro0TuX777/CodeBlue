@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}{{ repo_name }} Dashboard - CodeBlue{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<style>
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .metric-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+    .metric-value {
+        font-size: 2em;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .metric-label {
+        color: #666;
+        font-size: 0.9em;
+    }
+    .chart-container {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        min-height: 400px;
+    }
+    .trend-up { color: #28a745; }
+    .trend-down { color: #dc3545; }
+    .trend-stable { color: #6c757d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>{{ repo_name }} Dashboard</h2>
+    <p>Detailed security and quality metrics for this repository.</p>
+    
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('dashboard_overview') }}" class="btn btn-secondary">← Back to Overview</a>
+        <a href="{{ url_for('code_risk_heatmap', repo_name=repo_name) }}" class="btn">Risk Heatmap</a>
+        <a href="{{ url_for('security_posture', repo_name=repo_name) }}" class="btn">Security Posture</a>
+        <a href="{{ url_for('taint_analysis', repo_name=repo_name) }}" class="btn">Taint Analysis</a>
+    </div>
+</div>
+
+{% if latest_metrics %}
+    <div class="metrics-grid">
+        <div class="metric-card" style="border-left: 4px solid #dc3545;">
+            <div class="metric-value">{{ latest_metrics.high_severity_issues }}</div>
+            <div class="metric-label">High Severity Issues</div>
+        </div>
+        
+        <div class="metric-card" style="border-left: 4px solid #ffc107;">
+            <div class="metric-value">{{ latest_metrics.medium_severity_issues }}</div>
+            <div class="metric-label">Medium Severity Issues</div>
+        </div>
+        
+        <div class="metric-card" style="border-left: 4px solid #28a745;">
+            <div class="metric-value">{{ latest_metrics.low_severity_issues }}</div>
+            <div class="metric-label">Low Severity Issues</div>
+        </div>
+        
+        <div class="metric-card" style="border-left: 4px solid #007bff;">
+            <div class="metric-value">{{ latest_metrics.code_complexity|round(2) }}</div>
+            <div class="metric-label">Code Complexity</div>
+        </div>
+        
+        <div class="metric-card" style="border-left: 4px solid #6f42c1;">
+            <div class="metric-value">{{ latest_metrics.code_duplication|round(1) }}%</div>
+            <div class="metric-label">Code Duplication</div>
+        </div>
+        
+        <div class="metric-card" style="border-left: 4px solid #20c997;">
+            <div class="metric-value">{{ "{:,}".format(latest_metrics.lines_of_code) }}</div>
+            <div class="metric-label">Lines of Code</div>
+        </div>
+    </div>
+{% endif %}
+
+{% if dates and security_data %}
+    <div class="card">
+        <h3>Security Trends</h3>
+        <div class="chart-container">
+            <div id="security-chart"></div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>Code Quality Trends</h3>
+        <div class="chart-container">
+            <div id="quality-chart"></div>
+        </div>
+    </div>
+    
+    {% if additional_data %}
+        <div class="card">
+            <h3>Additional Metrics</h3>
+            <div class="chart-container">
+                <div id="additional-chart"></div>
+            </div>
+        </div>
+    {% endif %}
+    
+{% else %}
+    <div class="card">
+        <div class="alert alert-warning">
+            <strong>No historical data available.</strong> Run more scans to see trends over time.
+        </div>
+        
+        <div style="margin-top: 1rem;">
+            <form action="{{ url_for('handle_scan_code') }}" method="post" style="display: inline;">
+                <input type="hidden" name="repo_to_scan" value="{{ repo_name }}">
+                <button type="submit" class="btn">Run New Scan</button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<div class="card">
+    <h3>Repository Actions</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        <div>
+            <h4>Security Analysis</h4>
+            <p>Run comprehensive security scans and vulnerability assessments.</p>
+            <form action="{{ url_for('handle_scan_code') }}" method="post">
+                <input type="hidden" name="repo_to_scan" value="{{ repo_name }}">
+                <button type="submit" class="btn">Run Security Scan</button>
+            </form>
+        </div>
+        
+        <div>
+            <h4>Risk Assessment</h4>
+            <p>View file-level risk analysis and security hotspots.</p>
+            <a href="{{ url_for('code_risk_heatmap', repo_name=repo_name) }}" class="btn">View Risk Heatmap</a>
+        </div>
+        
+        <div>
+            <h4>Security Posture</h4>
+            <p>Overall security posture score and recommendations.</p>
+            <a href="{{ url_for('security_posture', repo_name=repo_name) }}" class="btn">Security Report</a>
+        </div>
+        
+        <div>
+            <h4>Code Visualization</h4>
+            <p>Visualize repository structure and dependencies.</p>
+            <a href="{{ url_for('visualize_repository', repo_path='Untested/' + repo_name) }}" class="btn">Visualize Code</a>
+        </div>
+    </div>
+</div>
+
+<script>
+{% if dates and security_data %}
+// Security trends chart
+const securityData = [
+    {
+        x: {{ dates|tojson }},
+        y: {{ security_data.high|tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'High Severity',
+        line: { color: '#dc3545' }
+    },
+    {
+        x: {{ dates|tojson }},
+        y: {{ security_data.medium|tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Medium Severity',
+        line: { color: '#ffc107' }
+    },
+    {
+        x: {{ dates|tojson }},
+        y: {{ security_data.low|tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Low Severity',
+        line: { color: '#28a745' }
+    }
+];
+
+const securityLayout = {
+    title: 'Security Issues Over Time',
+    xaxis: { title: 'Date' },
+    yaxis: { title: 'Number of Issues' },
+    showlegend: true
+};
+
+Plotly.newPlot('security-chart', securityData, securityLayout);
+
+// Code quality trends chart
+const qualityData = [
+    {
+        x: {{ dates|tojson }},
+        y: {{ quality_data.complexity|tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Complexity',
+        yaxis: 'y',
+        line: { color: '#007bff' }
+    },
+    {
+        x: {{ dates|tojson }},
+        y: {{ quality_data.duplication|tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Duplication %',
+        yaxis: 'y2',
+        line: { color: '#6f42c1' }
+    }
+];
+
+const qualityLayout = {
+    title: 'Code Quality Metrics Over Time',
+    xaxis: { title: 'Date' },
+    yaxis: { 
+        title: 'Complexity Score',
+        side: 'left'
+    },
+    yaxis2: {
+        title: 'Duplication %',
+        side: 'right',
+        overlaying: 'y'
+    },
+    showlegend: true
+};
+
+Plotly.newPlot('quality-chart', qualityData, qualityLayout);
+
+{% if additional_data %}
+// Additional metrics chart
+const additionalData = [
+    {
+        x: {{ dates|tojson }},
+        y: {{ additional_data.lines_of_code|tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Lines of Code',
+        yaxis: 'y',
+        line: { color: '#20c997' }
+    },
+    {
+        x: {{ dates|tojson }},
+        y: {{ additional_data.dependencies|tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Vulnerable Dependencies',
+        yaxis: 'y2',
+        line: { color: '#fd7e14' }
+    }
+];
+
+const additionalLayout = {
+    title: 'Additional Metrics Over Time',
+    xaxis: { title: 'Date' },
+    yaxis: { 
+        title: 'Lines of Code',
+        side: 'left'
+    },
+    yaxis2: {
+        title: 'Vulnerable Dependencies',
+        side: 'right',
+        overlaying: 'y'
+    },
+    showlegend: true
+};
+
+Plotly.newPlot('additional-chart', additionalData, additionalLayout);
+{% endif %}
+
+{% endif %}
+</script>
+{% endblock %}

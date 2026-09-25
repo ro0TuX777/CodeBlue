@@ -1,0 +1,23 @@
+{
+    "valid": [
+        "https://example.com",
+        "https://example.com/page",
+        "https://redirect.com"
+    ],
+    "invalid": [],
+    "reachable": [
+        "https://example.com",
+        "https://redirect.com"
+    ],
+    "unreachable": [
+        "https://example.com/page"
+    ],
+    "internal": [],
+    "external": [
+        "https://example.com",
+        "https://example.com/page",
+        "https://redirect.com"
+    ],
+    "duplicate": [],
+    "redirect": []
+}

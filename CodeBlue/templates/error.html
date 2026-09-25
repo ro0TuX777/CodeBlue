@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Error - CodeBlue{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="color: #dc3545;">Error</h2>
+    
+    {% if message %}
+        <div class="alert alert-error">
+            <strong>Error:</strong> {{ message }}
+        </div>
+    {% else %}
+        <div class="alert alert-error">
+            <strong>Error:</strong> An unexpected error occurred.
+        </div>
+    {% endif %}
+    
+    <div style="margin-top: 2rem;">
+        {% if back_url %}
+            <a href="{{ back_url }}" class="btn">Go Back</a>
+        {% else %}
+            <a href="{{ url_for('index') }}" class="btn">Return to Home</a>
+        {% endif %}
+        
+        <a href="{{ url_for('dashboard_overview') }}" class="btn btn-secondary" style="margin-left: 1rem;">View Dashboard</a>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Troubleshooting</h3>
+    <p>If you continue to experience issues, please try the following:</p>
+    <ul>
+        <li>Check that the repository URL is correct and accessible</li>
+        <li>Ensure you have proper permissions to access the repository</li>
+        <li>Verify that local paths exist and are readable</li>
+        <li>Check your network connection for remote repositories</li>
+        <li>Try refreshing the page and attempting the operation again</li>
+    </ul>
+    
+    <h4>Common Issues</h4>
+    <dl>
+        <dt>Repository not found</dt>
+        <dd>The repository URL may be incorrect or the repository may be private</dd>
+        
+        <dt>Permission denied</dt>
+        <dd>You may not have access to the repository or local directory</dd>
+        
+        <dt>Network timeout</dt>
+        <dd>The repository server may be temporarily unavailable</dd>
+        
+        <dt>Invalid path</dt>
+        <dd>The local or network path may not exist or be accessible</dd>
+    </dl>
+</div>
+{% endblock %}

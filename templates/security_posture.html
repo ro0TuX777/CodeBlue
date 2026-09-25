@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}Security Posture - {{ repo_name }} - CodeBlue{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<style>
+    .posture-score {
+        text-align: center;
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+    .score-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5em;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        border: 4px solid rgba(255,255,255,0.3);
+    }
+    .grade-a { background-color: #28a745; }
+    .grade-b { background-color: #17a2b8; }
+    .grade-c { background-color: #ffc107; color: #212529; }
+    .grade-d { background-color: #fd7e14; }
+    .grade-f { background-color: #dc3545; }
+    
+    .recommendations {
+        background: #f8f9fa;
+        border-left: 4px solid #007bff;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    .recommendation-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .priority-high { border-left: 4px solid #dc3545; }
+    .priority-medium { border-left: 4px solid #ffc107; }
+    .priority-low { border-left: 4px solid #28a745; }
+    
+    .taint-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    .taint-metric {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+    .taint-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .taint-label {
+        color: #666;
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Security Posture Assessment</h2>
+    <p><strong>Repository:</strong> {{ repo_name }}</p>
+    
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('dashboard_repository', repo_name=repo_name) }}" class="btn btn-secondary">← Back to Dashboard</a>
+        <a href="{{ url_for('code_risk_heatmap', repo_name=repo_name) }}" class="btn">Risk Heatmap</a>
+        <a href="{{ url_for('taint_analysis', repo_name=repo_name) }}" class="btn">Taint Analysis</a>
+    </div>
+</div>
+
+{% if posture_score is not none %}
+    <div class="posture-score">
+        <div class="score-circle grade-{{ posture_score.grade.lower() if posture_score.grade else 'f' }}">
+            {{ posture_score.grade if posture_score.grade else 'F' }}
+        </div>
+        <h3>Overall Security Score: {{ posture_score.overall_score|round(1) }}/100</h3>
+        <p>Grade: {{ posture_score.grade if posture_score.grade else 'F' }}</p>
+        <p><em>Last assessed: {{ posture_score.scan_date.strftime('%Y-%m-%d %H:%M') if posture_score.scan_date else 'Unknown' }}</em></p>
+    </div>
+    
+    <div class="card">
+        <h3>Category Breakdown</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="metric-card" style="border-left: 4px solid #dc3545;">
+                <div class="metric-value">{{ posture_score.vulnerability_score|round(1) }}</div>
+                <div class="metric-label">Vulnerability Score</div>
+            </div>
+            
+            <div class="metric-card" style="border-left: 4px solid #007bff;">
+                <div class="metric-value">{{ posture_score.code_quality_score|round(1) }}</div>
+                <div class="metric-label">Code Quality Score</div>
+            </div>
+            
+            <div class="metric-card" style="border-left: 4px solid #28a745;">
+                <div class="metric-value">{{ posture_score.security_practices_score|round(1) }}</div>
+                <div class="metric-label">Security Practices</div>
+            </div>
+            
+            <div class="metric-card" style="border-left: 4px solid #ffc107;">
+                <div class="metric-value">{{ posture_score.testing_score|round(1) }}</div>
+                <div class="metric-label">Testing Score</div>
+            </div>
+            
+            <div class="metric-card" style="border-left: 4px solid #6f42c1;">
+                <div class="metric-value">{{ posture_score.dependencies_score|round(1) }}</div>
+                <div class="metric-label">Dependencies Score</div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if taint_results %}
+    <div class="card">
+        <h3>Taint Analysis Summary</h3>
+        <div class="taint-summary">
+            <div class="taint-metric">
+                <div class="taint-value" style="color: #dc3545;">{{ taint_results.total_sources }}</div>
+                <div class="taint-label">Sources</div>
+            </div>
+            
+            <div class="taint-metric">
+                <div class="taint-value" style="color: #007bff;">{{ taint_results.total_sinks }}</div>
+                <div class="taint-label">Sinks</div>
+            </div>
+            
+            <div class="taint-metric">
+                <div class="taint-value" style="color: #28a745;">{{ taint_results.total_sanitizers }}</div>
+                <div class="taint-label">Sanitizers</div>
+            </div>
+            
+            <div class="taint-metric">
+                <div class="taint-value" style="color: #ffc107;">{{ taint_results.total_paths }}</div>
+                <div class="taint-label">Total Paths</div>
+            </div>
+            
+            <div class="taint-metric">
+                <div class="taint-value" style="color: #dc3545;">{{ taint_results.high_risk_paths }}</div>
+                <div class="taint-label">High Risk</div>
+            </div>
+        </div>
+        
+        {% if taint_paths %}
+            <h4>Critical Taint Paths</h4>
+            {% for path_type, paths in taint_paths.items() %}
+                {% if paths %}
+                    <div style="margin-bottom: 1rem;">
+                        <h5>{{ path_type.replace('_', ' ').title() }}</h5>
+                        {% for path in paths[:5] %}  {# Show only first 5 paths #}
+                            <div class="recommendation-item priority-high">
+                                <strong>{{ path.get('source', 'Unknown') }}</strong> → 
+                                <strong>{{ path.get('sink', 'Unknown') }}</strong>
+                                {% if path.get('file') %}
+                                    <br><small>File: {{ path.file }}</small>
+                                {% endif %}
+                                {% if path.get('risk_level') %}
+                                    <span class="status-badge status-{{ path.risk_level.lower() }}" style="float: right;">
+                                        {{ path.risk_level }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        {% if paths|length > 5 %}
+                            <p><em>... and {{ paths|length - 5 }} more paths</em></p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+{% endif %}
+
+{% if recommendations %}
+    <div class="card">
+        <h3>Security Recommendations</h3>
+        <div class="recommendations">
+            <p><strong>Priority Actions:</strong> Address these recommendations to improve your security posture.</p>
+        </div>
+        
+        {% for recommendation in recommendations %}
+            <div class="recommendation-item priority-{{ recommendation.get('priority', 'medium').lower() }}">
+                <h4>{{ recommendation.get('title', 'Security Recommendation') }}</h4>
+                <p>{{ recommendation.get('description', 'No description available') }}</p>
+                
+                {% if recommendation.get('impact') %}
+                    <p><strong>Impact:</strong> {{ recommendation.impact }}</p>
+                {% endif %}
+                
+                {% if recommendation.get('effort') %}
+                    <p><strong>Effort:</strong> {{ recommendation.effort }}</p>
+                {% endif %}
+                
+                {% if recommendation.get('category') %}
+                    <span class="status-badge status-{{ recommendation.get('priority', 'medium').lower() }}">
+                        {{ recommendation.category }}
+                    </span>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if dates and overall_scores %}
+    <div class="card">
+        <h3>Security Posture Trends</h3>
+        <div style="height: 400px;">
+            <div id="posture-trends-chart"></div>
+        </div>
+    </div>
+{% endif %}
+
+<div class="card">
+    <h3>Actions</h3>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <form action="{{ url_for('handle_scan_code') }}" method="post" style="display: inline;">
+            <input type="hidden" name="repo_to_scan" value="{{ repo_name }}">
+            <button type="submit" class="btn">Re-run Analysis</button>
+        </form>
+        
+        <a href="{{ url_for('code_risk_heatmap', repo_name=repo_name) }}" class="btn btn-secondary">View Risk Heatmap</a>
+        <a href="{{ url_for('taint_analysis', repo_name=repo_name) }}" class="btn btn-secondary">Detailed Taint Analysis</a>
+        <button type="button" class="btn btn-secondary" onclick="exportReport()">Export Report</button>
+    </div>
+</div>
+
+<script>
+{% if dates and overall_scores %}
+// Security posture trends chart
+const postureData = [
+    {
+        x: {{ dates|tojson }},
+        y: {{ overall_scores|tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Overall Score',
+        line: { color: '#007bff', width: 3 }
+    },
+    {
+        x: {{ dates|tojson }},
+        y: {{ vulnerability_scores|tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Vulnerability Score',
+        line: { color: '#dc3545' }
+    },
+    {
+        x: {{ dates|tojson }},
+        y: {{ code_quality_scores|tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Code Quality',
+        line: { color: '#28a745' }
+    },
+    {
+        x: {{ dates|tojson }},
+        y: {{ security_practices_scores|tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Security Practices',
+        line: { color: '#ffc107' }
+    }
+];
+
+const postureLayout = {
+    title: 'Security Posture Over Time',
+    xaxis: { title: 'Date' },
+    yaxis: { 
+        title: 'Score (0-100)',
+        range: [0, 100]
+    },
+    showlegend: true,
+    height: 400
+};
+
+Plotly.newPlot('posture-trends-chart', postureData, postureLayout);
+{% endif %}
+
+function exportReport() {
+    // Simple export functionality
+    const content = document.querySelector('.container').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Security Posture Report - {{ repo_name }}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .card { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; }
+                .posture-score { background: #f8f9fa; padding: 20px; text-align: center; }
+                .score-circle { display: inline-block; padding: 20px; border-radius: 50%; }
+                .grade-a { background-color: #28a745; color: white; }
+                .grade-b { background-color: #17a2b8; color: white; }
+                .grade-c { background-color: #ffc107; }
+                .grade-d { background-color: #fd7e14; color: white; }
+                .grade-f { background-color: #dc3545; color: white; }
+            </style>
+        </head>
+        <body>
+            <h1>Security Posture Report - {{ repo_name }}</h1>
+            <p>Generated on: ${new Date().toLocaleString()}</p>
+            ${content}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+</script>
+{% endblock %}

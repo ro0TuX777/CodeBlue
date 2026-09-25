@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  bluescrub:
+    build: .
+    container_name: bluescrub
+    ports:
+      - "0.0.0.0:7842:5001"
+    volumes:
+      - ./:/app
+      - bluescrub_data:/app/data
+      - ./analysis:/analysis
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+      - TYPESAFE_API_KEY=${TYPESAFE_API_KEY}
+    restart: unless-stopped
+
+volumes:
+  bluescrub_data:

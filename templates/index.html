@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}CodeBlue - Home{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Welcome to CodeBlue Security Analysis Tool</h2>
+    <p>CodeBlue is a comprehensive security analysis tool that helps you analyze repositories, scan for vulnerabilities, and visualize code structure.</p>
+</div>
+
+<div class="card">
+    <h3>Repository Analysis</h3>
+    <p>Analyze repositories from GitHub, local directories, or network paths.</p>
+    
+    <form action="{{ url_for('scrape') }}" method="post">
+        <div class="form-group">
+            <label for="tags">GitHub Tags (comma-separated):</label>
+            <input type="text" id="tags" name="tags" placeholder="e.g., security, python, javascript">
+        </div>
+        
+        <div class="form-group">
+            <label for="github_url">GitHub Repository URL:</label>
+            <input type="url" id="github_url" name="github_url" placeholder="https://github.com/user/repo">
+        </div>
+        
+        <div class="form-group">
+            <label for="local_path">Local Directory Path:</label>
+            <input type="text" id="local_path" name="local_path" placeholder="/path/to/local/repository">
+        </div>
+        
+        <div class="form-group">
+            <label for="network_path">Network Path:</label>
+            <input type="text" id="network_path" name="network_path" placeholder="\\server\share\repository">
+        </div>
+        
+        <button type="submit" class="btn">Analyze Repository</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Quick Actions</h3>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="{{ url_for('dashboard_overview') }}" class="btn">View Dashboard</a>
+        <a href="{{ url_for('visualize') }}" class="btn btn-secondary">Visualize Code</a>
+        <a href="/analyze-binary" class="btn btn-secondary">Binary Analysis</a>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Features</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        <div>
+            <h4>Security Analysis</h4>
+            <ul>
+                <li>Vulnerability scanning</li>
+                <li>Taint analysis</li>
+                <li>Security posture assessment</li>
+                <li>Risk heat maps</li>
+            </ul>
+        </div>
+        <div>
+            <h4>Code Quality</h4>
+            <ul>
+                <li>Complexity analysis</li>
+                <li>Code duplication detection</li>
+                <li>Maintainability metrics</li>
+                <li>Test coverage analysis</li>
+            </ul>
+        </div>
+        <div>
+            <h4>Visualization</h4>
+            <ul>
+                <li>Repository structure diagrams</li>
+                <li>Dependency graphs</li>
+                <li>Code flow visualization</li>
+                <li>Interactive dashboards</li>
+            </ul>
+        </div>
+        <div>
+            <h4>Binary Analysis</h4>
+            <ul>
+                <li>Static analysis</li>
+                <li>Dynamic analysis</li>
+                <li>Reverse engineering tools</li>
+                <li>Vulnerability detection</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+// Add some interactivity
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input[type="text"], input[type="url"]');
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            // Clear other inputs when one is being used
+            if (this.value.trim()) {
+                inputs.forEach(otherInput => {
+                    if (otherInput !== this) {
+                        otherInput.style.opacity = '0.5';
+                    } else {
+                        otherInput.style.opacity = '1';
+                    }
+                });
+            } else {
+                inputs.forEach(otherInput => {
+                    otherInput.style.opacity = '1';
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

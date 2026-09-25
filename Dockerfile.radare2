@@ -1,0 +1,54 @@
+FROM ubuntu:22.04
+
+# Set non-interactive installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    pkg-config \
+    libzip-dev \
+    zlib1g-dev \
+    libssl-dev \
+    libcapstone-dev \
+    libmagic-dev \
+    libxxhash-dev \
+    libfile-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone and install Radare2
+RUN git clone https://github.com/radareorg/radare2.git /opt/radare2 && \
+    cd /opt/radare2 && \
+    ./sys/install.sh && \
+    cd / && \
+    rm -rf /opt/radare2
+
+# Create a directory for analysis
+RUN mkdir -p /analysis
+
+# Set working directory
+WORKDIR /analysis
+
+# Create a simple script to run Radare2 analysis
+RUN echo '#!/bin/bash\n\
+BINARY_PATH=$1\n\
+\n\
+if [ -z "$BINARY_PATH" ]; then\n\
+    echo "Usage: $0 <binary_path>"\n\
+    exit 1\n\
+fi\n\
+\n\
+# Run basic analysis\n\
+r2 -c "aa;afl;iI;iS;is;ii;il;izz" -q $BINARY_PATH\n\
+' > /usr/local/bin/analyze_binary.sh && \
+    chmod +x /usr/local/bin/analyze_binary.sh
+
+# Create a volume for analysis data
+VOLUME ["/analysis"]
+
+# Set the entrypoint
+ENTRYPOINT ["/usr/local/bin/analyze_binary.sh"]
+
+# Default command (can be overridden)
+CMD ["/bin/bash"]

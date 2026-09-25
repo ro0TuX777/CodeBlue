@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Review Repositories - CodeBlue{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Review Selected Repositories</h2>
+    
+    {% if message %}
+        <div class="alert alert-info">
+            {{ message }}
+        </div>
+    {% endif %}
+    
+    {% if detailed_info %}
+        <p>Review the following {{ detailed_info|length }} repository(ies) before saving:</p>
+        
+        <form action="{{ url_for('save_selected') }}" method="post">
+            <div style="margin-bottom: 1rem;">
+                <button type="submit" class="btn">Save Selected Repositories</button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary" style="margin-left: 1rem;">Start New Search</a>
+            </div>
+            
+            {% for repo in detailed_info %}
+                <div class="card" style="margin-bottom: 1rem; border-left: 4px solid #28a745;">
+                    <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                        <input type="checkbox" name="repo_urls" value="{{ repo.html_url }}" id="review_repo_{{ loop.index }}" checked style="margin-right: 1rem;">
+                        <label for="review_repo_{{ loop.index }}" style="margin: 0; font-weight: bold; font-size: 1.1em;">
+                            {{ repo.name }}
+                        </label>
+                    </div>
+                    
+                    {% if repo.description %}
+                        <p style="margin-bottom: 1rem; color: #666;">{{ repo.description }}</p>
+                    {% endif %}
+                    
+                    {% if repo.error %}
+                        <div class="alert alert-error">
+                            <strong>Error:</strong> {{ repo.error }}
+                        </div>
+                    {% else %}
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            {% if repo.language and repo.language != 'N/A' %}
+                                <div><strong>Language:</strong> {{ repo.language }}</div>
+                            {% endif %}
+                            
+                            {% if repo.stars and repo.stars != 'N/A' %}
+                                <div><strong>Stars:</strong> {{ repo.stars }}</div>
+                            {% endif %}
+                            
+                            {% if repo.forks and repo.forks != 'N/A' %}
+                                <div><strong>Forks:</strong> {{ repo.forks }}</div>
+                            {% endif %}
+                            
+                            {% if repo.watchers and repo.watchers != 'N/A' %}
+                                <div><strong>Watchers:</strong> {{ repo.watchers }}</div>
+                            {% endif %}
+                            
+                            {% if repo.issues_count and repo.issues_count != 'N/A' %}
+                                <div><strong>Open Issues:</strong> {{ repo.issues_count }}</div>
+                            {% endif %}
+                            
+                            {% if repo.pulls_count and repo.pulls_count != 'N/A' %}
+                                <div><strong>Pull Requests:</strong> {{ repo.pulls_count }}</div>
+                            {% endif %}
+                            
+                            {% if repo.last_updated %}
+                                <div><strong>Last Updated:</strong> {{ repo.last_updated }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div style="margin-top: 1rem;">
+                            <a href="{{ repo.html_url }}" target="_blank" class="btn btn-secondary" style="margin-right: 0.5rem;">View Repository</a>
+                            
+                            <form action="{{ url_for('handle_scan_code') }}" method="post" style="display: inline;">
+                                <input type="hidden" name="repo_to_scan" value="{{ repo.html_url }}">
+                                <button type="submit" class="btn" style="margin-right: 0.5rem;">Scan Code</button>
+                            </form>
+                            
+                            {% if repo.html_url.startswith('/') or repo.html_url.startswith('\\') or ':' in repo.html_url %}
+                                <a href="{{ url_for('visualize_repository', repo_path=repo.html_url) }}" class="btn btn-secondary">Visualize</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+                <button type="submit" class="btn">Save Selected Repositories</button>
+                <button type="button" class="btn btn-secondary" onclick="selectAll()" style="margin-left: 1rem;">Select All</button>
+                <button type="button" class="btn btn-secondary" onclick="selectNone()" style="margin-left: 0.5rem;">Select None</button>
+            </div>
+        </form>
+    {% else %}
+        <div class="alert alert-warning">
+            <strong>No repositories to review.</strong> Please search for repositories first.
+        </div>
+        
+        <div style="margin-top: 1rem;">
+            <a href="{{ url_for('index') }}" class="btn">Search for Repositories</a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function selectAll() {
+    const checkboxes = document.querySelectorAll('input[name="repo_urls"]');
+    checkboxes.forEach(checkbox => checkbox.checked = true);
+}
+
+function selectNone() {
+    const checkboxes = document.querySelectorAll('input[name="repo_urls"]');
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+}
+
+// Add click handler to cards to toggle checkbox
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        const checkbox = card.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+            card.addEventListener('click', function(e) {
+                // Don't toggle if clicking on links, buttons, or the checkbox itself
+                if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.type === 'checkbox') {
+                    return;
+                }
+                checkbox.checked = !checkbox.checked;
+            });
+            
+            // Add visual feedback
+            card.style.cursor = 'pointer';
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    card.style.backgroundColor = '#e8f5e8';
+                } else {
+                    card.style.backgroundColor = 'white';
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

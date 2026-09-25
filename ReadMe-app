@@ -1,0 +1,65 @@
+README for the Web Application
+
+Overview
+
+This web application is designed to scrape GitHub repositories based on tags, review selected repositories, clone them, and perform a security analysis using bluescrub.py. The results of the analysis are presented in a detailed HTML report.
+
+Features
+
+	•	Scrape Repositories: Search for GitHub repositories based on tags and display the results.
+	•	Review Selected Repositories: Select repositories from the search results to review and save detailed information.
+	•	Clone Repositories: Clone selected repositories to the local machine.
+	•	Security Analysis: Run bluescrub.py to perform a security analysis on the cloned repositories and generate a detailed HTML report.
+	•	View Analysis Results: View the analysis results directly in the application.
+Routes
+
+	•	GET /: Render the home page.
+	•	POST /scrape: Scrape GitHub repositories based on tags.
+	•	POST /review: Review the selected repositories.
+	•	POST /save_selected: Save the detailed information of the selected repositories to a JSON file.
+	•	POST /scan_code: Run the security analysis on the selected repository.
+	•	POST /clone_repository: Clone the selected repository.
+	•	GET /view_analysis/<repo_name>/<filename>: View the detailed analysis results.
+
+Example Usage
+
+	1.	Scrape GitHub Repositories:
+	•	Go to the home page and enter tags to search for repositories.
+	•	Click the “Scrape” button to display the search results.
+	2.	Review and Save Repositories:
+	•	Select the repositories you want to review and click “Review Selected”.
+	•	On the review page, you can save the detailed information by providing a filename.
+	3.	Clone and Scan Repositories:
+	•	Click the “Clone Repository” button to clone the selected repository.
+	•	Click the “Scan Code” button to run the security analysis on the cloned repository.
+	4.	View Analysis Results:
+	•	After the scan is complete, view the detailed analysis results directly in the application.
+
+Dependencies
+
+	•	Flask
+	•	gitpython
+	•	matplotlib
+	•	plotly
+	•	bandit
+	•	pylint
+	•	safety
+	•	werkzeug
+
+Ensure all dependencies are installed before running the application. You can install them using pip:
+pip install flask gitpython matplotlib plotly bandit pylint safety werkzeug
+
+Code Overview
+
+	•	app.py: Main application file containing routes and logic for scraping, reviewing, cloning, and scanning repositories.
+	•	bluescrub.py: Script for performing a security analysis on the cloned repositories and generating HTML reports.
+	•	templates/: Directory containing HTML templates for rendering different pages.
+	•	static/: Directory containing static files such as CSS and JavaScript.
+
+Notes
+
+	•	The application uses Flask for the web interface.
+	•	The security analysis is performed by bluescrub.py, which generates detailed HTML reports of the findings.
+	•	The application allows users to interactively select, clone, and scan GitHub repositories for security analysis.
+
+This README provides an overview, setup instructions, route descriptions, and example usage for the web application, helping users understand its purpose, features, and how to run it effectively.

@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  radare2:
+    build:
+      context: .
+      dockerfile: Dockerfile.radare2
+    container_name: codeblue_radare2
+    volumes:
+      - ./analysis:/analysis

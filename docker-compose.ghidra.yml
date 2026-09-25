@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  ghidra:
+    build:
+      context: .
+      dockerfile: Dockerfile.ghidra
+    container_name: codeblue_ghidra
+    volumes:
+      - ./analysis:/analysis
+    environment:
+      - DISPLAY=${DISPLAY}
+    # For X11 forwarding if needed
+    # volumes:
+    #   - /tmp/.X11-unix:/tmp/.X11-unix
+    #   - ~/.Xauthority:/root/.Xauthority

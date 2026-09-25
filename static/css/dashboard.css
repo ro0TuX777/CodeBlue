@@ -1,0 +1,143 @@
+/* Dashboard Styles */
+
+/* Card styles */
+.card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 15px 20px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.card-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    padding: 10px 20px;
+    font-size: 0.85rem;
+}
+
+/* Metric groups */
+.metric-group {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.metric-group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.metric-group h6 {
+    margin-bottom: 10px;
+    color: #495057;
+    font-weight: 600;
+}
+
+/* Metric items */
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.metric-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.metric-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Progress bars */
+.progress {
+    height: 20px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.progress-bar {
+    text-align: center;
+    line-height: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Summary cards */
+.bg-primary, .bg-success, .bg-warning, .bg-danger, .bg-info {
+    color: white;
+}
+
+.bg-warning {
+    color: #212529;
+}
+
+.card h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 10px 0;
+}
+
+.card .small {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* Badges */
+.badge {
+    padding: 5px 8px;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+/* Table styles */
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Filter controls */
+.filter-controls {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.filter-controls label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card h2 {
+        font-size: 2rem;
+    }
+    
+    .metric-item {
+        margin-bottom: 10px;
+    }
+    
+    .filter-controls .form-row > div {
+        margin-bottom: 10px;
+    }
+}

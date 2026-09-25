@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Scan Results - CodeBlue{% endblock %}
+
+{% block head %}
+<style>
+    .scan-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .scan-summary .metric {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        border-left: 4px solid #007bff;
+    }
+    .scan-summary .metric.success {
+        border-left-color: #28a745;
+    }
+    .scan-summary .metric.warning {
+        border-left-color: #ffc107;
+    }
+    .scan-summary .metric.error {
+        border-left-color: #dc3545;
+    }
+    .scan-summary .metric-value {
+        font-size: 2em;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .scan-summary .metric-label {
+        color: #666;
+        font-size: 0.9em;
+    }
+    .analysis-content {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .analysis-content iframe {
+        width: 100%;
+        min-height: 600px;
+        border: none;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Security Scan Results</h2>
+    
+    {% if result %}
+        {% if result.success %}
+            <div class="alert alert-info">
+                <strong>Scan Completed Successfully</strong>
+                {% if result.details %}
+                    <br>{{ result.details }}
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="alert alert-error">
+                <strong>Scan Failed</strong>
+                {% if result.error %}
+                    <br>{{ result.error }}
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        {% if result.repo_name %}
+            <div class="scan-summary">
+                <div class="metric">
+                    <div class="metric-value">{{ result.repo_name }}</div>
+                    <div class="metric-label">Repository</div>
+                </div>
+                
+                {% if result.repo_path %}
+                    <div class="metric">
+                        <div class="metric-value" style="font-size: 1em;">{{ result.repo_path }}</div>
+                        <div class="metric-label">Path</div>
+                    </div>
+                {% endif %}
+                
+                {% if result.success %}
+                    <div class="metric success">
+                        <div class="metric-value">✓</div>
+                        <div class="metric-label">Status</div>
+                    </div>
+                {% else %}
+                    <div class="metric error">
+                        <div class="metric-value">✗</div>
+                        <div class="metric-label">Status</div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="action-buttons">
+                <a href="{{ url_for('dashboard_repository', repo_name=result.repo_name) }}" class="btn">View Dashboard</a>
+                <a href="{{ url_for('code_risk_heatmap', repo_name=result.repo_name) }}" class="btn btn-secondary">Risk Heatmap</a>
+                <a href="{{ url_for('security_posture', repo_name=result.repo_name) }}" class="btn btn-secondary">Security Posture</a>
+                <a href="{{ url_for('taint_analysis', repo_name=result.repo_name) }}" class="btn btn-secondary">Taint Analysis</a>
+                {% if result.repo_path %}
+                    <a href="{{ url_for('visualize_repository', repo_path=result.repo_path) }}" class="btn btn-secondary">Visualize</a>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        {% if result.output %}
+            <div class="card">
+                <h3>Scan Output</h3>
+                <pre style="background: #f8f9fa; padding: 1rem; border-radius: 4px; overflow-x: auto;">{{ result.output }}</pre>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{% if analysis_content %}
+    <div class="card">
+        <h3>Detailed Analysis Report</h3>
+        <div class="analysis-content">
+            {{ analysis_content|safe }}
+        </div>
+    </div>
+{% endif %}
+
+<div class="card">
+    <h3>Next Steps</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        <div>
+            <h4>Dashboard</h4>
+            <p>View comprehensive metrics and trends for this repository.</p>
+            {% if result and result.repo_name %}
+                <a href="{{ url_for('dashboard_repository', repo_name=result.repo_name) }}" class="btn">Open Dashboard</a>
+            {% endif %}
+        </div>
+        
+        <div>
+            <h4>Risk Analysis</h4>
+            <p>Explore file-level risk assessments and security hotspots.</p>
+            {% if result and result.repo_name %}
+                <a href="{{ url_for('code_risk_heatmap', repo_name=result.repo_name) }}" class="btn">View Heatmap</a>
+            {% endif %}
+        </div>
+        
+        <div>
+            <h4>Security Posture</h4>
+            <p>Review overall security posture and recommendations.</p>
+            {% if result and result.repo_name %}
+                <a href="{{ url_for('security_posture', repo_name=result.repo_name) }}" class="btn">Security Report</a>
+            {% endif %}
+        </div>
+        
+        <div>
+            <h4>Code Visualization</h4>
+            <p>Visualize repository structure and dependencies.</p>
+            {% if result and result.repo_path %}
+                <a href="{{ url_for('visualize_repository', repo_path=result.repo_path) }}" class="btn">Visualize Code</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 2rem;">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Scan Another Repository</a>
+    <a href="{{ url_for('dashboard_overview') }}" class="btn btn-secondary" style="margin-left: 1rem;">View All Results</a>
+</div>
+{% endblock %}

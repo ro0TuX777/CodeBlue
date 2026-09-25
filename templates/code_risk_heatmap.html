@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Risk Heatmap - {{ repo_name }} - CodeBlue{% endblock %}
+
+{% block head %}
+<style>
+    .heatmap-container {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .file-risk-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        border-left: 4px solid;
+        background: white;
+        transition: transform 0.2s;
+    }
+    .file-risk-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .file-risk-item.risk-high { border-left-color: #dc3545; background: #fff5f5; }
+    .file-risk-item.risk-medium { border-left-color: #ffc107; background: #fffbf0; }
+    .file-risk-item.risk-low { border-left-color: #28a745; background: #f8fff8; }
+    
+    .risk-score {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-right: 1rem;
+        min-width: 60px;
+        text-align: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        color: white;
+    }
+    .risk-score.high { background-color: #dc3545; }
+    .risk-score.medium { background-color: #ffc107; color: #212529; }
+    .risk-score.low { background-color: #28a745; }
+    
+    .file-info {
+        flex-grow: 1;
+    }
+    .file-path {
+        font-family: monospace;
+        font-weight: bold;
+        margin-bottom: 0.25rem;
+    }
+    .file-metrics {
+        font-size: 0.9em;
+        color: #666;
+    }
+    
+    .risk-legend {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+    }
+    
+    .filter-controls {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    .filter-controls select,
+    .filter-controls input {
+        margin-right: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+    .stat-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .stat-label {
+        color: #666;
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Code Risk Heatmap</h2>
+    <p><strong>Repository:</strong> {{ repo_name }}</p>
+    <p>Visual representation of file-level security and complexity risks.</p>
+    
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('dashboard_repository', repo_name=repo_name) }}" class="btn btn-secondary">← Back to Dashboard</a>
+        <a href="{{ url_for('security_posture', repo_name=repo_name) }}" class="btn">Security Posture</a>
+        <a href="{{ url_for('taint_analysis', repo_name=repo_name) }}" class="btn">Taint Analysis</a>
+    </div>
+</div>
+
+{% if file_risks %}
+    {% set high_risk_files = file_risks.values() | selectattr('total_risk', 'gt', 70) | list %}
+    {% set medium_risk_files = file_risks.values() | selectattr('total_risk', 'le', 70) | selectattr('total_risk', 'gt', 30) | list %}
+    {% set low_risk_files = file_risks.values() | selectattr('total_risk', 'le', 30) | list %}
+    
+    <div class="summary-stats">
+        <div class="stat-card" style="border-left: 4px solid #dc3545;">
+            <div class="stat-value">{{ high_risk_files | length }}</div>
+            <div class="stat-label">High Risk Files</div>
+        </div>
+        
+        <div class="stat-card" style="border-left: 4px solid #ffc107;">
+            <div class="stat-value">{{ medium_risk_files | length }}</div>
+            <div class="stat-label">Medium Risk Files</div>
+        </div>
+        
+        <div class="stat-card" style="border-left: 4px solid #28a745;">
+            <div class="stat-value">{{ low_risk_files | length }}</div>
+            <div class="stat-label">Low Risk Files</div>
+        </div>
+        
+        <div class="stat-card" style="border-left: 4px solid #007bff;">
+            <div class="stat-value">{{ file_risks | length }}</div>
+            <div class="stat-label">Total Files</div>
+        </div>
+        
+        <div class="stat-card" style="border-left: 4px solid #6f42c1;">
+            <div class="stat-value">{{ (file_risks.values() | sum(attribute='total_risk') / file_risks.values() | length) | round(1) }}</div>
+            <div class="stat-label">Average Risk</div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>Risk Legend</h3>
+        <div class="risk-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #dc3545;"></div>
+                <span>High Risk (70-100)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ffc107;"></div>
+                <span>Medium Risk (30-70)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #28a745;"></div>
+                <span>Low Risk (0-30)</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>File Risk Analysis</h3>
+        
+        <div class="filter-controls">
+            <label>Filter by risk level:</label>
+            <select id="risk-filter" onchange="filterFiles()">
+                <option value="all">All Files</option>
+                <option value="high">High Risk Only</option>
+                <option value="medium">Medium Risk Only</option>
+                <option value="low">Low Risk Only</option>
+            </select>
+            
+            <label>Sort by:</label>
+            <select id="sort-filter" onchange="sortFiles()">
+                <option value="risk">Total Risk</option>
+                <option value="security">Security Risk</option>
+                <option value="complexity">Complexity Risk</option>
+                <option value="churn">Churn Risk</option>
+                <option value="name">File Name</option>
+            </select>
+            
+            <label>Search:</label>
+            <input type="text" id="search-filter" placeholder="Search files..." onkeyup="filterFiles()">
+        </div>
+        
+        <div class="heatmap-container" id="file-list">
+            {% for file_path, risk_data in file_risks.items() %}
+                {% set risk_level = 'high' if risk_data.total_risk > 70 else ('medium' if risk_data.total_risk > 30 else 'low') %}
+                <div class="file-risk-item risk-{{ risk_level }}" 
+                     data-risk="{{ risk_level }}"
+                     data-total-risk="{{ risk_data.total_risk }}"
+                     data-security-risk="{{ risk_data.security_risk }}"
+                     data-complexity-risk="{{ risk_data.complexity_risk }}"
+                     data-churn-risk="{{ risk_data.churn_risk }}"
+                     data-file-name="{{ file_path.split('/')[-1].lower() }}"
+                     data-search="{{ file_path.lower() }}">
+                    
+                    <div class="risk-score {{ risk_level }}">
+                        {{ risk_data.total_risk | round(0) | int }}
+                    </div>
+                    
+                    <div class="file-info">
+                        <div class="file-path">{{ file_path }}</div>
+                        <div class="file-metrics">
+                            Security: {{ risk_data.security_risk | round(1) }} | 
+                            Complexity: {{ risk_data.complexity_risk | round(1) }} | 
+                            Churn: {{ risk_data.churn_risk | round(1) }} | 
+                            Issues: {{ risk_data.issue_count }} | 
+                            Cyclomatic: {{ risk_data.cyclomatic_complexity | round(1) }}
+                            {% if risk_data.lines_changed %}
+                                | Changes: {{ risk_data.lines_changed }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-left: auto;">
+                        {% if repo_path %}
+                            <a href="file://{{ repo_path }}/{{ file_path }}" class="btn btn-secondary" style="font-size: 0.8em; padding: 0.25rem 0.5rem;">View File</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+{% else %}
+    <div class="card">
+        <div class="alert alert-warning">
+            <strong>No risk data available.</strong> Run a security scan to generate file risk analysis.
+        </div>
+        
+        <div style="margin-top: 1rem;">
+            <form action="{{ url_for('handle_scan_code') }}" method="post" style="display: inline;">
+                <input type="hidden" name="repo_to_scan" value="{{ repo_name }}">
+                <button type="submit" class="btn">Run Security Scan</button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<div class="card">
+    <h3>Understanding Risk Metrics</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        <div>
+            <h4>Security Risk</h4>
+            <p>Based on security issues, vulnerabilities, and potential attack vectors in the file.</p>
+        </div>
+        
+        <div>
+            <h4>Complexity Risk</h4>
+            <p>Derived from cyclomatic complexity, cognitive complexity, and code maintainability.</p>
+        </div>
+        
+        <div>
+            <h4>Churn Risk</h4>
+            <p>Files that change frequently may have higher risk due to instability and testing gaps.</p>
+        </div>
+        
+        <div>
+            <h4>Total Risk</h4>
+            <p>Combined score considering all risk factors, weighted by their impact on security.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterFiles() {
+    const riskFilter = document.getElementById('risk-filter').value;
+    const searchFilter = document.getElementById('search-filter').value.toLowerCase();
+    const files = document.querySelectorAll('.file-risk-item');
+    
+    files.forEach(file => {
+        const risk = file.getAttribute('data-risk');
+        const searchText = file.getAttribute('data-search');
+        
+        let showRisk = riskFilter === 'all' || risk === riskFilter;
+        let showSearch = searchFilter === '' || searchText.includes(searchFilter);
+        
+        if (showRisk && showSearch) {
+            file.style.display = 'flex';
+        } else {
+            file.style.display = 'none';
+        }
+    });
+}
+
+function sortFiles() {
+    const sortBy = document.getElementById('sort-filter').value;
+    const container = document.getElementById('file-list');
+    const files = Array.from(container.querySelectorAll('.file-risk-item'));
+    
+    files.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch(sortBy) {
+            case 'risk':
+                aValue = parseFloat(a.getAttribute('data-total-risk'));
+                bValue = parseFloat(b.getAttribute('data-total-risk'));
+                return bValue - aValue; // Descending
+            case 'security':
+                aValue = parseFloat(a.getAttribute('data-security-risk'));
+                bValue = parseFloat(b.getAttribute('data-security-risk'));
+                return bValue - aValue; // Descending
+            case 'complexity':
+                aValue = parseFloat(a.getAttribute('data-complexity-risk'));
+                bValue = parseFloat(b.getAttribute('data-complexity-risk'));
+                return bValue - aValue; // Descending
+            case 'churn':
+                aValue = parseFloat(a.getAttribute('data-churn-risk'));
+                bValue = parseFloat(b.getAttribute('data-churn-risk'));
+                return bValue - aValue; // Descending
+            case 'name':
+                aValue = a.getAttribute('data-file-name');
+                bValue = b.getAttribute('data-file-name');
+                return aValue.localeCompare(bValue); // Ascending
+            default:
+                return 0;
+        }
+    });
+    
+    // Re-append sorted files
+    files.forEach(file => container.appendChild(file));
+}
+
+// Initialize filters and sorting
+document.addEventListener('DOMContentLoaded', function() {
+    sortFiles(); // Sort by risk initially
+    filterFiles();
+});
+</script>
+{% endblock %}

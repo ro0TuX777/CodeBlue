@@ -1,0 +1,57 @@
+FROM ubuntu:22.04
+
+# Set non-interactive installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    unzip \
+    openjdk-17-jdk \
+    xauth \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libfontconfig1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables
+ENV GHIDRA_VERSION=10.3.2
+ENV GHIDRA_INSTALL_DIR=/opt/ghidra
+ENV GHIDRA_PATH=/opt/ghidra
+ENV PATH=$PATH:$GHIDRA_INSTALL_DIR
+
+# Download and install Ghidra
+RUN mkdir -p $GHIDRA_INSTALL_DIR && \
+    wget -q https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${GHIDRA_VERSION}_build/ghidra_${GHIDRA_VERSION}_PUBLIC_20230711.zip -O /tmp/ghidra.zip && \
+    unzip -q /tmp/ghidra.zip -d /tmp && \
+    mv /tmp/ghidra_${GHIDRA_VERSION}_PUBLIC/* $GHIDRA_INSTALL_DIR && \
+    chmod +x $GHIDRA_INSTALL_DIR/ghidraRun && \
+    rm -rf /tmp/ghidra*
+
+# Create a directory for analysis
+RUN mkdir -p /analysis
+
+# Set working directory
+WORKDIR /analysis
+
+# Create a simple script to run Ghidra headless analyzer
+RUN echo '#!/bin/bash\n\
+BINARY_PATH=$1\n\
+PROJECT_DIR=/analysis/projects\n\
+PROJECT_NAME=analysis\n\
+\n\
+mkdir -p $PROJECT_DIR\n\
+\n\
+$GHIDRA_INSTALL_DIR/support/analyzeHeadless $PROJECT_DIR $PROJECT_NAME -import $BINARY_PATH -analysisTimeoutPerFile 300\n\
+' > /usr/local/bin/analyze_binary.sh && \
+    chmod +x /usr/local/bin/analyze_binary.sh
+
+# Create a volume for analysis data
+VOLUME ["/analysis"]
+
+# Set the entrypoint
+ENTRYPOINT ["/usr/local/bin/analyze_binary.sh"]
+
+# Default command (can be overridden)
+CMD ["/bin/bash"]
