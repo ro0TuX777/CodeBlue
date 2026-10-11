@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:25.10
 
 # Set non-interactive installation
 ENV DEBIAN_FRONTEND=noninteractive
